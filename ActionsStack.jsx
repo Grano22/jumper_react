@@ -1,5 +1,5 @@
 /* Jumper Library by Grano22 | v 1.0 | React */
-import { basicHashString } from './Cryptography';
+import { basicHashString, cyrb53 } from './Cryptography';
 
 export function splitByParsing(str, occur, escape="/") {
     let arr = [], inStr = false, partStr = "";
@@ -47,18 +47,18 @@ export class ActionsStack {
         this.component = component;
         this.stackSize = options.stackSize;
         this.setOperationsNamespace(inArr);
-        let resActions = null, accessHash = this.component.constructor.name+"#"+basicHashString(this.component.constructor.toString());
+        let resActions = null, accessHash = this.component.constructor.name+"#"+cyrb53(this.component.constructor.toString());
         if(loadResumeable && (resActions = window.sessionStorage.getItem("jumper_c_"+accessHash)!=null)) {
             try {
             this.lastAction = "operationsLoad";
-            resActions = resActions.split(";");
+            resActions = splitByParsing(resActions, ";", "/");
             let jumperS1 = window.sessionStorage.getItem("jumper_sh_"+accessHash);
             if(jumperS1!=null) {
                 jumperS1 = splitByParsing(jumperS1, "&", "/");
                 let outCpt = {};
                 for(let onceRes in jumperS1) {
                     if(this.stackHistorySize>=this.operationsHistoryStack.length) {
-                    let jumperAParams = splitByParsing(jumperS1[onceRes], ";", "/"), jumperA = new window[jumperAParams[0]]; 
+                    let jumperAParams = splitByParsing(jumperS1[onceRes], ";", "/"), jumperA = new (this.getOperationByNamespace(jumperAParams[0]));
                     let cd = jumperAParams[1].split(/[- :]/);
                     jumperA.creationDate = new Date(Date.UTC(cd[0], cd[1]-1, cd[2], cd[3], cd[4], cd[5]));
                     let ud = jumperAParams[2].split(/[- :]/);
@@ -79,7 +79,7 @@ export class ActionsStack {
                 let outCpt = {};
                 for(let onceRes in jumperS2) {
                     if(this.stackRestoredSize>=this.operationsRestoredStack.length) {
-                    let jumperAParams = splitByParsing(jumperS2[onceRes], ";", "/"), jumperA = new window[jumperAParams[0]];
+                    let jumperAParams = splitByParsing(jumperS2[onceRes], ";", "/"), jumperA = new (this.getOperationByNamespace(jumperAParams[0]));
                     let cd = jumperAParams[1].split(/[- :]/);
                     jumperA.creationDate = new Date(Date.UTC(cd[0], cd[1]-1, cd[2], cd[3], cd[4], cd[5]));
                     let ud = jumperAParams[2].split(/[- :]/);
@@ -96,11 +96,12 @@ export class ActionsStack {
             } catch(e) {
                 console.error(e);
             }
-            function onBeforePageUnload() {
-                this.saveStacksSessions();
-            }
-            window.addEventListener("beforeunload", onBeforePageUnload.bind(this));
         }
+        function onBeforePageUnload() {
+            this.saveStacksSessions();
+            console.log("really");
+        }
+        window.addEventListener("beforeunload", onBeforePageUnload.bind(this));
     }
     addError(newErr) {
         this.errorsStack.push(newErr);
@@ -108,8 +109,12 @@ export class ActionsStack {
     }
     setOperationsNamespace(inArr) {
         if(!Array.isArray(inArr)) { this.addError(new ActionError("Invaild input, array expected", 0, "")); return this; }
-        for(let classAction of inArr) this.namespaceRange.push(classAction.prototype.constructor.name); //.prototype.constructor.name
+        for(let classAction of inArr) this.namespaceRange.push(classAction); //.prototype.constructor.name .prototype.constructor.name
         return this;
+    }
+    getOperationByNamespace(name) {
+        for(let classOnce of this.namespaceRange) { if(classOnce.prototype.constructor.name==name) return classOnce; console.log(classOnce, this.namespaceRange); }
+        return null;
     }
     flush() {
         this.lastAction = "flush";
@@ -126,8 +131,9 @@ export class ActionsStack {
     addOperation(newOperation, inputData = {}) {
         try {
             this.lastAction = "addOperation";
-            if(!this.namespaceRange.includes(newOperation.constructor.name)) throw "Unexpected Action class, use one of registered: "+this.namespaceRange.join(",");
+            if(!this.namespaceRange.map(v=>v.prototype.constructor.name).includes(newOperation.constructor.name)) throw "Unexpected Action class, use one of registered: "+this.namespaceRange.join(",");
             newOperation.inputData = inputData;
+            newOperation.lastInputData = inputData;
             let outCpt = newOperation.onStore(this.component, inputData, newOperation.outputData) || {};
             this.operationsHistoryStack.push(newOperation);
             if(this.operationsHistoryStack.length>=this.stackSize) this.operationsHistoryStack.shift();
@@ -167,7 +173,7 @@ export class ActionsStack {
 
     }
     saveStacksSessions() {
-        let accessHash = this.component.constructor.name+"#"+basicHashString(this.component.constructor.toString());
+        let accessHash = this.component.constructor.name+"#"+cyrb53(this.component.constructor.toString());
         window.sessionStorage.setItem("jumper_c_"+accessHash, this.toString());
         let hl = "", rl = "";
         for(let ha in this.operationsHistoryStack) { if(this.operationsHistoryStack[ha].type==3) { hl += this.operationsHistoryStack[ha].toString().replace(/\&/g, "\\&"); if(ha!=this.operationsHistoryStack.length - 1) hl += "&"; } }
@@ -175,7 +181,7 @@ export class ActionsStack {
         for(let ra in this.operationsRestoredStack) { if(this.operationsHistoryStack[ra].type==3) { rl += this.operationsRestoredStack[ra].toString().replace(/\&/g, "\\&"); if(ra!=this.operationsRestoredStack.length - 1) rl += "&"; } }
         window.sessionStorage.setItem("jumper_sr_"+accessHash, rl);
     }
-    toString() { return `${basicHashString(this.component.constructor.toString())}h;${basicHashString(this.component.constructor.toString())}r;${this.lastAction}`; }
+    toString() { return `${cyrb53(this.component.constructor.toString())}h;${cyrb53(this.component.constructor.toString())}r;${this.lastAction}`; }
     dump() { return `${this.lastAction}`; }
 }
 
@@ -199,7 +205,7 @@ export class ActionOperation {
     onRestore() {/* Native Code */}
     onFlush() {/* Native Code */}
     onUpdate() {/* Native Code */}
-    toString() {return `${this.constructor.name};${this.creationDate.toISOString().slice(0, 19).replace('T', ' ')};${this.updateDate.toISOString().slice(0, 19).replace('T', ' ')};${JSON.stringify(this.outputData)};${JSON.stringify(this.inputData)}`;}
+    toString() {return `${this.constructor.name};${this.creationDate.toISOString().slice(0, 19).replace('T', ' ')};${this.updateDate.toISOString().slice(0, 19).replace('T', ' ')};${JSON.stringify(this.outputData)};${JSON.stringify(this.lastInputData)}`;}
 }
 
 export class ActionEventsOperation extends ActionOperation {
