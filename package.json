@@ -2,7 +2,7 @@
   "type": "module",
   "name": "jumper",
   "version": "0.1.4",
-  "description": "Library for managment of application states",
+  "description": "Library for managment of application states and more",
   "main": "./Jumper.js",
 
   "scripts": {
