@@ -1,10 +1,15 @@
 /* Jumper | Components Module */
 import React, {Component} from 'react';
+import { format } from './dataProcessing';
 
 export default class Widget extends Component {
+    structure = "";
+    params = "";
+
     constructor(props, typesPrep) {
         super(props);
         let self = this;
+        if(typeof props.structure!="undefined") self.structure = props.structure;
         typesPrep.forEach((propName)=>{
             let propt = propName.split("'")[0], propn = propName.split("'")[1];
             try {
@@ -39,8 +44,12 @@ export default class Widget extends Component {
         });
     }
 
-    prepare() {
+    preparedOutput(strHTML, params) {
+        return (<React.Fragment dangerouslySetInnerHTML={{ __html:format(strHTML, params)  }}></React.Fragment>);
+    }
 
+    prepare() {
+        return this.preparedOutput(this.structure || "", this.params || null);
     }
 
     output() {

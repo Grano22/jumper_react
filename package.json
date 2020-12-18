@@ -12,6 +12,10 @@
     "react",
     "npm"
   ],
-  "author": "Grano22",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Grano22/jumper.git"
+  },
+  "author": "grano22",
   "license": "MIT"
 }
