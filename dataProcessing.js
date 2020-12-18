@@ -39,8 +39,9 @@ export function format(targetStr, initialObj=null) {
         let sequences = [], sequence = "", inVarDeclaration = false, outputStr = "", fParams = [];
         for(let charn in targetStr) {
             if(targetStr.hasOwnProperty(charn)) {
-            if(!inVarDeclaration && (typeof targetStr[charn - 1]=="undefined" || targetStr[charn - 1]!="\\") && targetStr[charn]=="%" && targetStr[parseInt(charn) + 1]!=" ") {
+            if(!inVarDeclaration && (typeof targetStr[charn - 1]=="undefined" || targetStr[charn - 1]!="\\") && targetStr[charn]=="%" && targetStr[parseInt(charn) + 1].trim()!="") {
                 inVarDeclaration = true;
+                console.log("works "+targetStr[parseInt(charn) + 1]);
             } else if(inVarDeclaration && targetStr[charn]=="[") {
                 if(!["s", "n", "b", "a", "f", "d"].includes(sequence)) throw "Unknown type given in format "+sequence+" at position "+charn;
                 fParams.push(sequence);
@@ -51,7 +52,8 @@ export function format(targetStr, initialObj=null) {
                 sequence = "";
                 inVarDeclaration = false;
                 fParams = [];
-            } else if(inVarDeclaration && (targetStr[charn]==" " || targetStr.length - 1<=parseInt(charn))) {
+            } else if(inVarDeclaration && (targetStr[charn].trim()=="" || targetStr.length - 1<=parseInt(charn))) {
+                console.log(targetStr[charn]);
                 if(targetStr.length - 1<=parseInt(charn)) sequence += targetStr[charn];
                 if(sequence.indexOf("[")>-1) throw "Format proeprty name cannot have a whitespace";
                 if(!["s", "n", "b", "a", "f", "d"].includes(sequence)) throw "Unknown type given in format "+sequence+" at position "+charn;
