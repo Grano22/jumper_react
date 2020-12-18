@@ -38,7 +38,6 @@ export function format(targetStr, initialObj=null) {
     try {
         let sequences = [], sequence = "", inVarDeclaration = false, outputStr = "", fParams = [];
         for(let charn in targetStr) {
-            console.log(targetStr[charn], !(targetStr[charn].charCodeAt()>=65 && targetStr[charn].charCodeAt()<=90), !(targetStr[charn].charCodeAt()>=97 && targetStr[charn].charCodeAt()<=122));
             if(!inVarDeclaration && (typeof targetStr[charn - 1]=="undefined" || targetStr[charn - 1]!="\\") && targetStr[charn]=="%" && targetStr[parseInt(charn) + 1]!=" ") {
                 inVarDeclaration = true;
             } else if(inVarDeclaration && targetStr[charn]=="[") {
@@ -63,12 +62,12 @@ export function format(targetStr, initialObj=null) {
             else if(inVarDeclaration) sequence += targetStr[charn];
         }
         outputStr = targetStr;
-        console.log(sequences);
         let currItem = null;
         for(let catched in sequences) {
             if(Array.isArray(sequences[catched])) {
                 if(sequences[catched].length>0) {
                     currItem = sequences[catched].length>1 ? initialObj[sequences[catched][1]] : initialObj[catched];
+                    if(typeof currItem!="undefined" && currItem!=null) {
                     switch(sequences[catched][0]) {
                         case "s":
                             if(typeof currItem!="string") currItem = currItem.toString();
@@ -89,6 +88,7 @@ export function format(targetStr, initialObj=null) {
                         case "b":
                             
                         break;
+                    }
                     }
                 } else throw "Cannot parse format due to lack of type at index "+catched+" (function format error)";
             } else throw "Cannot parse format due to invaild sequence type at index "+catched+" (function format error)";
