@@ -38,6 +38,7 @@ export function format(targetStr, initialObj=null) {
     try {
         let sequences = [], sequence = "", inVarDeclaration = false, outputStr = "", fParams = [];
         for(let charn in targetStr) {
+            if(targetStr.hasOwnProperty(charn)) {
             if(!inVarDeclaration && (typeof targetStr[charn - 1]=="undefined" || targetStr[charn - 1]!="\\") && targetStr[charn]=="%" && targetStr[parseInt(charn) + 1]!=" ") {
                 inVarDeclaration = true;
             } else if(inVarDeclaration && targetStr[charn]=="[") {
@@ -50,7 +51,8 @@ export function format(targetStr, initialObj=null) {
                 sequence = "";
                 inVarDeclaration = false;
                 fParams = [];
-            } else if(inVarDeclaration && targetStr[charn]==" ") {
+            } else if(inVarDeclaration && (targetStr[charn]==" " || targetStr.length - 1<=parseInt(charn))) {
+                if(targetStr.length - 1<=parseInt(charn)) sequence += targetStr[charn];
                 if(sequence.indexOf("[")>-1) throw "Format proeprty name cannot have a whitespace";
                 if(!["s", "n", "b", "a", "f", "d"].includes(sequence)) throw "Unknown type given in format "+sequence+" at position "+charn;
                 fParams.push(sequence);
@@ -60,6 +62,7 @@ export function format(targetStr, initialObj=null) {
                 fParams = [];
             } else if(inVarDeclaration && targetStr[charn]!="[" && targetStr[charn]!="_" && !(targetStr[charn].charCodeAt()>=65 && targetStr[charn].charCodeAt()<=90) && !(targetStr[charn].charCodeAt()>=97 && targetStr[charn].charCodeAt()<=122)) throw "Invaild symbol "+targetStr[charn]+" at position "+charn;
             else if(inVarDeclaration) sequence += targetStr[charn];
+            }
         }
         outputStr = targetStr;
         let currItem = null;
@@ -78,15 +81,16 @@ export function format(targetStr, initialObj=null) {
                             outputStr = outputStr.replace(sequences[catched].length>1 ? "%"+sequences[catched][0]+"["+sequences[catched][1]+"]" : "%"+sequences[catched][0], currItem);
                         break;
                         case "f":
-                            if(Number(currItem) === currItem && currItem % 1 !== 0) currItem = parseFloat(currItem);
+                            if(!(Number(currItem) === currItem && currItem % 1 !== 0)) { currItem = parseFloat(currItem); }
                             outputStr = outputStr.replace(sequences[catched].length>1 ? "%"+sequences[catched][0]+"["+sequences[catched][1]+"]" : "%"+sequences[catched][0], currItem);
                         break;
                         case "d":
-                            if(Number(currItem) === currItem && currItem % 1 === 0) currItem = parseInt(currItem);
+                            if(!(Number(currItem) === currItem && currItem % 1 === 0)) currItem = parseInt(currItem);
                             outputStr = outputStr.replace(sequences[catched].length>1 ? "%"+sequences[catched][0]+"["+sequences[catched][1]+"]" : "%"+sequences[catched][0], currItem);
                         break;
                         case "b":
-                            
+                            if(typeof currItem!="boolean") currItem = !!currItem;
+                            outputStr = outputStr.replace(sequences[catched].length>1 ? "%"+sequences[catched][0]+"["+sequences[catched][1]+"]" : "%"+sequences[catched][0], currItem);
                         break;
                     }
                     }
