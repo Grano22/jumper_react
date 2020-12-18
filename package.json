@@ -1,17 +1,15 @@
 {
+  "type": "module",
   "name": "jumper",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "description": "Library for managment of application states",
-  "main":"./Jumper.js",
-  "exports": {
-    ".": "./Jumper.js",
-    "./browser": "./Jumper.browser.mjs"
-  },
+  "main": "./Jumper.js",
+
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "node",
+    "react",
     "npm"
   ],
   "author": "Grano22",
