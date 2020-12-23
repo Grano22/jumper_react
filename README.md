@@ -53,13 +53,13 @@ let container = document.createElement("div"), childs = parseHTMLReactComponent(
 2. initialObj: any - can be an Array<string> or Object.prototype. Contains a elements to replace.
   
 Types:
-*%s - String
-*%f - float
-*%a - any
-*%ad - auto detect
-*%d - decimal
-*%n - science notation
-*%f{number} - floating with rounding (experimental)
+* %s - String
+* %f - float
+* %a - any
+* %ad - auto detect
+* %d - decimal
+* %n - science notation
+* %f{number} - floating with rounding (experimental)
 
 ```javascript
 console.log(format("Hello %s exacly! Wow, we make it %d times!", ["World", 14]));
