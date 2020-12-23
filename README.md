@@ -60,6 +60,8 @@ Types:
 * %d - decimal
 * %n - science notation
 * %f{number} - floating with rounding (experimental)
+* %b - boolean
+* %bt - boolean translated (experimental)
 
 ```javascript
 console.log(format("Hello %s exacly! Wow, we make it %d times!", ["World", 14]));
