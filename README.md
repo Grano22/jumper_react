@@ -33,7 +33,7 @@ export default function App() {
 3. allowed: boolean - if true all tag names given in argument 2 will be parsed, otherwise ignored.
 
 ```javascript
-let container = document.createElement("div"); childs = parseHTMLReactComponent(
+let container = document.createElement("div"), childs = parseHTMLReactComponent(
     '<h1><i>Hello world!</i></h1> Really? <span  id="me" style="color:green; background-color:#eee; -webkit-transform:translate(-100px,200px)">Yolo</span> <div><h2>I love react!</h2></div> <input type="text"/>',
     ["h1"],
     false
@@ -44,7 +44,30 @@ let container = document.createElement("div"); childs = parseHTMLReactComponent(
  document.body.appendChild(container);
 ```
 
+## What's new in 0.1.4?
+* function format(targetStr: string, initialObj: any = null)
+
+## 0.1.4 examples
+### format
+1. targetStr: string - input with sample text to parse
+2. initialObj: any - can be an Array<string> or Object.prototype. Contains a elements to replace.
+  
+Types:
+*%s - String
+*%f - float
+*%a - any
+*%ad - auto detect
+*%d - decimal
+*%n - science notation
+*%f{number} - floating with rounding (experimental)
+
+```javascript
+console.log(format("Hello %s exacly! Wow, we make it %d times!", ["World", 14]));
+console.log(format("Thats really simple with %s[labelsWord], you can use it in any %s[situationWord]!", {labelsWord:"labels", situationWord:"situation"}));
+```
+
 ## Examples
+
 
 
 Jumper is a NPM package and library with modules, which extends any react apps.
