@@ -206,23 +206,6 @@ export var HTMLReactParser = new class {
     }
 }
 
-export class HTMLBasedComponent extends Component{
-    constructor(props) {
-        super(props);
-        this.state = {
-            content: props.content || ""
-        };
-    }
-    
-    render(){
-        console.log(this.state.content);
-      const content = {
-        __dangerousHTML: typeof this.state.content=="string" ? this.state.content : ""
-      };
-      return <RawHTML>{'haha'}</RawHTML>;
-    }
-}
-
 export default class Widget extends Component {
     structure = "";
     params = "";
@@ -267,10 +250,7 @@ export default class Widget extends Component {
     }
 
     prepareOutput(strHTML, params) {
-        //return (<React.Fragment dangerouslySetInnerHTML={{ __html:format(strHTML, params)  }}></React.Fragment>);
-        //return <HTMLBasedComponent content={format(strHTML, params)}/>;
-        //return <><output>Kurwa</output>, <>        s       </>, <p>No ja pierdole!</p></>;
-        return parseReactComponent(format(strHTML, params));
+        return parseHTMLReactComponent(format(strHTML, params));
     }
 
     prepare() {
@@ -305,3 +285,9 @@ export class ListWidget extends Widget {
 
 
 }
+
+/*module.export = {
+    parseHTMLComponent:parseHTMLComponent,
+    parseHTMLReactComponent:parseHTMLReactComponent,
+    Widget:Widget
+}*/

@@ -375,3 +375,4 @@ var afterConstruct = new Jumper();
 var Console = afterConstruct.Console, Browser = afterConstruct.Browser;
 export { Console, Browser };
 export default afterConstruct;
+//module.exports = afterConstruct;
