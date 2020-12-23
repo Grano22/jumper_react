@@ -1,10 +1,9 @@
 {
   "type": "module",
-  "name": "jumper",
-  "version": "0.1.4",
+  "name": "jumper_react",
+  "version": "0.1.5",
   "description": "Library for managment of application states and more",
   "main": "./Jumper.js",
-
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,6 +11,9 @@
     "react",
     "npm"
   ],
+  "dependencies": {
+    "react": "^16.5.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Grano22/jumper.git"

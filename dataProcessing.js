@@ -101,5 +101,6 @@ export function format(targetStr, initialObj=null) {
         return outputStr;
     } catch(FormatingError) {
         console.error(FormatingError);
+        return targetStr;
     }
 }
