@@ -59,6 +59,9 @@ Types:
 * %ad - auto detect
 * %d - decimal
 * %n - science notation
+* %oct - octal number
+* %hex - hex number
+* %bin - binary number
 * %f{number} - floating with rounding (experimental)
 * %b - boolean
 * %bt - boolean translated (experimental)
