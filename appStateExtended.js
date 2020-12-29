@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import { JSONSafteyParse } from './dataProcessing';
 import { basicHashString, cyrb53 } from './cryptography';
+import { Console, JumperError } from 'jumper';
 /*  Jumper Diagnostic Extension 
     Version: 0.1
 
@@ -224,114 +225,9 @@ export class JumperToolbar extends Component {
 /* END Jumper Diagnostic Extension */
 
 var startTime = microtime(true);
-console.log(startTime);
-
-class JumperConsoleEntry {
-    constructor(selfExecution=true) {
-        if(selfExecution) this.execute();
-    }
-    execute() {/* Console Native Code */}
-}
-
-class JumperLog extends JumperConsoleEntry {
-    name = "(Unknown Name)";
-    description = "(Uknown Description)";
-
-    constructor(selfExecution=true, name="", description="") {
-        super(selfExecution);
-        this.name = name;
-        this.description = description;
-    }
-    execute() {console.log(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
-}
-
-export class JumperError extends JumperConsoleEntry {
-    name = "(Unknown Name)";
-    description = "(Uknown Description)";
-    no = -1;
-
-    constructor(selfExecution=true, no=-1, name="", description="") {
-        super(selfExecution);
-        this.no = no;
-        this.name = name;
-        this.description = description;
-    }
-    execute() {console.error(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
-}
-
-export class JumperWarn {
-    name = "(Unknown Name)"; 
-    description = "(Uknown Description)";
-
-    constructor(selfExecution=true) {
-        if(selfExecution) this.execute();
-    }
-    execute() {console.warn(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
-}
-
-export class JumperInfo {
-    name = "(Unknown Name)";
-    description = "(Uknown Description)";
-
-    constructor(selfExecution=true) {
-        if(selfExecution) this.execute();
-    }
-    execute() {console.info(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
-}
-
-export const JumperLogger = new class {
-    logsStack = [];
-    errorsStack = [];
-    warnsStack = [];
-    infoStack = [];
-
-    log() {
-        this.logsStack.push(new JumperLog());
-    }
-    error() {
-        this.errorsStack.push(new JumperError());
-    }
-    warn() {
-        this.warnsStack.push(new JumperWarn());
-    }
-    info() {
-        this.infoStack.push(new JumperInfo());
-    }
-    critical() {
-        new JumperCriticalError();
-    }
-    delete() {
-
-    }
-    deleteAll() {
-
-    }
-}
 
 export class JumperMemoryLeak extends JumperError {
 
-}
-
-export class JumperCriticalError extends JumperError {
-    constructor(selfExecution=true) {
-        if(selfExecution) this.execute();
-    }
-    execute() {
-        let errCont = document.createElement("div");
-        errCont.innerHTML = `<style id="jumper_debuger_styles" type="text/css">
-        #jumper_debuger_fullwidth_error {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
-        #jumper_debuger_message_box {
-
-        }
-        </style><div id="jumper_debuger_fullwidth_error"><div id="jumper_debuger_message_box">
-        
-        </div></div>`;
-        document.body.appendChild(errCont);
-    }
 }
 
 export function splitByParsing(str, occur, escape="/") {
@@ -394,12 +290,12 @@ export class ActionsStack {
     //Measuring
     restoredMemoryTime = -1;
 
-    constructor(component, inArr, loadResumeable=true, options={stackSize:20, debug:false}) {
+    constructor(component, inArr, options={stackSize:20, debug:false, loadResumeable:true}) {
         this.component = component;
-        this.component.state = Object.assign(this.component.state || {}, {});
+        if(typeof this.component.state=="undefined") this.component.state = {};
         this.stackSize = options.stackSize;
         this.setOperationsNamespace(inArr);
-        if(loadResumeable) this.restoredMemoryTime = this.restoreStacksSessions();
+        if(options.loadResumeable) this.restoredMemoryTime = this.restoreStacksSessions();
         function onBeforePageUnload() {
             this.saveStacksSessions();
         }
@@ -409,11 +305,9 @@ export class ActionsStack {
         let debugContainer = document.createElement("div");
         debugContainer.id = "jumper-debuger-container";
         document.body.appendChild(debugContainer);
-        console.log(component.componentWillUnmount);
         ReactDOM.render(<JumperToolbar context={this}/>, debugContainer);
         if(typeof component.componentWillUnmount!="undefined") { let callback = component.componentWillUnmount.bind(component); component.componentWillUnmount = function() { callback(); debugContainer.remove(); } } else component.componentWillUnmount = function() { /*ReactDOM.unmountComponentAtNode();*/ debugContainer.remove(); }
         }
-        console.log("Init");
         //END Toolbar
     }
     addError(newErr) {
@@ -490,6 +384,15 @@ export class ActionsStack {
     setTypeRange() {
 
     }
+    defineCustomInitialData() {
+
+    }
+    saveComponentProps() {
+
+    }
+    saveComponentState() {
+
+    }
     saveStacksSessions() {
         let accessHash = this.component.constructor.name+"#"+cyrb53(this.component.constructor.toString());
         window.sessionStorage.setItem("jumper_c_"+accessHash, this.toString());
@@ -552,7 +455,7 @@ export class ActionsStack {
                 this.component.setState(Object.assign(outCpt, {actionHandler:this.dump()}));
             }
             } catch(e) {
-                console.error(e);
+                this.addError(e, 0, "");
             }
             
         }
@@ -627,4 +530,22 @@ export class ActionResumeOperation extends ActionOperation {
     onResume(s, i) {/* Native Code */}
 }
 
-export default { ActionsStack, ActionOperation, ActionResumeOperation };
+export class TemponaryActionOperation extends ActionOperation {
+    type = 4;
+
+    constructor() {
+
+    }
+    
+    update() {
+
+    }
+
+    updateTo() {
+
+    }
+
+    onReject() {/* Native Code */}
+}
+
+export default { ActionsStack, ActionOperation, ActionResumeOperation, TemponaryActionOperation };

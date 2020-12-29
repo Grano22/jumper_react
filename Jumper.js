@@ -1,20 +1,59 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-class JumperConsoleLogEntry {
-    name = "";
-    description = "";
+//Gloabl throwable and errors
+///throw new CriticalError("Something went badly wrong!");
+function CriticalError(){ 
+    Error.apply(this, arguments);
+    this.name = "Critical Error";
+}
+CriticalError.prototype = Object.create(Error.prototype);
+
+class JumperCriticalError {
+    message = "";
+    addingDate = new Date();
+
+    constructor(mess="Critical unknown error", selfExecution=true, debugLevel=0) {
+        this.message = mess;
+        if(selfExecution) this.execute();
+    }
+    execute() {
+        let errCont = document.createElement("div");
+        errCont.innerHTML = `<style id="jumper_debuger_styles" type="text/css">
+        #jumper_debuger_fullwidth_error {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        #jumper_debuger_message_box {
+
+        }
+        </style><div id="jumper_debuger_fullwidth_error"><div id="jumper_debuger_message_box">
+            ${this.addingDate.toISOString().slice(0, 19).replace('T', ' ')}
+            ${this.message}
+
+        </div></div>`;
+        document.body.appendChild(errCont);
+    }
+}
+
+class JumperConsoleEntry {
+    name = "(Unknown Name)";
+    description = "(Unknown Description)";
     titledLines = [];
     lines = [];
     label = "";
 
     addingDate = new Date();
 
-    constructor(lines, description="", name="") {
+    constructor(lines, description="", name="", selfExecution=false) {
         this.lines = lines;
         this.description = description;
         this.name = name;
+        if(selfExecution) this.execute();
     }
+
+    execute() {/* Console Native Code */}
 
     setLabel(label) { this.label = label; return this; }
 
@@ -32,11 +71,69 @@ class JumperConsoleLogEntry {
     }
 }
 
+class JumperLog extends JumperConsoleEntry {
+    name = "(Unknown Name)";
+    description = "(Uknown Description)";
+
+    constructor(name="", description="", selfExecution=true) {
+        super([], description, name, selfExecution);
+    }
+    execute() {console.log(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
+}
+
+export class JumperError extends JumperConsoleEntry {
+    name = "(Unknown Name)";
+    description = "(Uknown Description)";
+    no = -1;
+
+    constructor(no=-1, name="", description="", selfExecution=true) {
+        super([], description, name, selfExecution);
+        this.no = no;
+    }
+    execute() {console.error(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
+}
+
+export class JumperWarn extends JumperConsoleEntry {
+    name = "(Unknown Name)"; 
+    description = "(Uknown Description)";
+
+    constructor(name="", description="", selfExecution=true) {
+        super([], description, name, selfExecution);
+    }
+    execute() {console.warn(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
+}
+
+export class JumperInfo extends JumperConsoleEntry {
+    description = "(Unknown Description)";
+
+    constructor(description="", selfExecution=true) {
+        super([], description, "", selfExecution);
+    }
+    execute() {console.info(`Name:\n\t${this.name}\nDescription:\n\t${this.description}`);}
+}
+
+class JumperLocalStack {
+    limit = 20;
+    _stack = [];
+
+    constructor(assocOptions={}) {
+        for(let assocOption in assocOptions) {
+            if(typeof this[assocOption]!="undefined") this[assocOption] = assocOptions[assocOption];
+        }
+    }
+
+    push(LogEntry) {
+        this._stack.push(LogEntry);
+    }
+}
+
 class JumperConsole {
-    _errors = [];
-    _warns = [];
-    _infos = [];
-    _logs = [];
+    _errors = new JumperLocalStack();
+    _warns = new JumperLocalStack();
+    _infos = new JumperLocalStack();
+    _logs = new JumperLocalStack();
+    _criticals = new JumperLocalStack();
+    _localStacks = {};
     
     //Defines
     _labels = {};
@@ -64,27 +161,35 @@ class JumperConsole {
     }
 
     log(name, description, label="", lines=[], print=true) {
-        let entryObj = new JumperConsoleLogEntry(lines, description, name);
+        let entryObj = new JumperLog(lines, description, name, false);
         this._logs.push(entryObj);
         if(print) console.logS(entryObj.toString());
     }
 
     error(errNo=-1, name, description, label="", lines=[], print=true) {
-        let entryObj = new JumperConsoleLogEntry(lines, description, name);
+        let entryObj = new JumperError(lines, description, name, false);
         this._errors.push(entryObj);
         if(print) console.errorS(entryObj.toString());
     }
 
     warn(name, description, label="", lines=[], print=true) {
-        let entryObj = new JumperConsoleLogEntry(lines, description, name);
+        let entryObj = new JumperWarn(lines, description, name, false);
         this._warns.push(entryObj);
         if(print) console.warnS(entryObj.toString());
     }
 
     info(description, label="", lines=[], print=true) {
-        let entryObj = new JumperConsoleLogEntry(lines, description);
+        let entryObj = new JumperInfo(lines, description, false);
         this._infos.push(entryObj);
         if(print) console.infoS(entryObj.toString());
+    }
+
+    critical() {
+        this._criticals.push(new JumperCriticalError());
+    }
+
+    print() {
+
     }
 
     printLogs(label="") {
@@ -105,6 +210,12 @@ class JumperConsole {
 
     printErrors(label="") {
 
+    }
+
+    traceLocalStack(options) {
+        let newLocalStack = new JumperLocalStack(options);
+        this._localStacks[Object.keys(this._localStacks).length] = newLocalStack;
+        return newLocalStack;
     }
 
     get lastError() { return this._errors[this._errors.length - 1]; }
@@ -270,8 +381,8 @@ class Jumper {
                                 argumentsArr[argIndex - 1] = "%c"+arguments[argIndex];
                                 argumentsArr[argIndex] = currLabel.styles.log;
                             }
-                            consoleEntry = new JumperConsoleLogEntry(Array.from(argumentsArr)).setLabel(arguments[0][1]);
-                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleLogEntry(Array.from(argumentsArr)); }
+                            consoleEntry = new JumperConsoleEntry(Array.from(argumentsArr)).setLabel(arguments[0][1]);
+                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleEntry(Array.from(argumentsArr)); }
                         consoleContext._logs.push(consoleEntry);
                         if(!this.ignoreTypes.includes("log")) consoleLog.apply(consoleContext, argumentsArr);
                     }.bind(consoleContext);
@@ -284,8 +395,8 @@ class Jumper {
                                 argumentsArr[argIndex] = "%c"+arguments[argIndex];
                                 argumentsArr[argIndex + 1] =  currLabel.styles.log;
                             }
-                            consoleEntry = new JumperConsoleLogEntry(Array.from(argumentsArr)).setLabel(arguments[0][1]);
-                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleLogEntry(Array.from(argumentsArr)); }
+                            consoleEntry = new JumperConsoleEntry(Array.from(argumentsArr)).setLabel(arguments[0][1]);
+                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleEntry(Array.from(argumentsArr)); }
                         consoleContext._warns.push(consoleEntry);
                         if(!this.ignoreTypes.includes("warn")) consoleWarn.apply(consoleContext, argumentsArr);
                     }.bind(consoleContext);
@@ -298,8 +409,8 @@ class Jumper {
                                 argumentsArr[argIndex] = "%c"+arguments[argIndex];
                                 argumentsArr[argIndex + 1] =  currLabel.styles.log;
                             }
-                            consoleEntry = new JumperConsoleLogEntry(argumentsArr).setLabel(arguments[0][1]);
-                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleLogEntry(argumentsArr); }
+                            consoleEntry = new JumperConsoleEntry(argumentsArr).setLabel(arguments[0][1]);
+                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleEntry(argumentsArr); }
                         consoleContext._errors.push(consoleEntry);
                         if(!this.ignoreTypes.includes("error")) consoleError.apply(consoleContext, argumentsArr);
                     }.bind(consoleContext);
@@ -312,8 +423,8 @@ class Jumper {
                                 argumentsArr[argIndex] = "%c"+arguments[argIndex];
                                 argumentsArr[argIndex + 1] =  currLabel.styles.log;
                             }
-                            consoleEntry = new JumperConsoleLogEntry(argumentsArr).setLabel(arguments[0][1]);
-                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleLogEntry(argumentsArr); }
+                            consoleEntry = new JumperConsoleEntry(argumentsArr).setLabel(arguments[0][1]);
+                        } else { argumentsArr = arguments; consoleEntry = new JumperConsoleEntry(argumentsArr); }
                         consoleContext._infos.push(consoleEntry);
                         if(!this.ignoreTypes.includes("info")) consoleInfo.apply(consoleContext, argumentsArr);
                     }.bind(consoleContext);

@@ -213,8 +213,7 @@ export default class Widget extends Component {
     constructor(props, typesPrep) {
         super(props);
         let self = this;
-        if(typeof props.structure!="undefined") self.structure = props.structure;
-        if(typeof props.childProps!="undefined") self.childProps = props.childProps;
+        for(let propName of ["structure", "childProps", "parentProps"]) if(typeof props[propName]!="undefined") self[propName] = props[propName];
         typesPrep.forEach((propName)=>{
             let propt = propName.split("'")[0], propn = propName.split("'")[1];
             try {
@@ -260,7 +259,6 @@ export default class Widget extends Component {
     output() {
         try { 
         let preparedOutput = this.prepare();
-        console.log(preparedOutput);
         if(React.isValidElement(preparedOutput)) return preparedOutput;
         else if(Array.isArray(preparedOutput)) {
             let combinedArray = [];
@@ -277,13 +275,44 @@ export default class Widget extends Component {
     }
 }
 
+//ListWidget Component
 export class ListWidget extends Widget {
     constructor(props, typesPrep) {
-        super(props, typesPrep);
-       
+        super(props, ["a'outputList", "s'headerStructure", "s'valueDeterminer"].concat(typesPrep || []));
+        this.sourceOutputList = this.outputList;
+        //for(let propName of ["headerStructure"]) if(typeof props[propName]!="undefined") this[propName] = props[propName];
     }
 
+    prepare() {
+        let self = this, elArr = [], childProps = this.childProps, parsedProps = {}, parentProps = this.parentProps, parsedParentProps = {};
+        elArr = this.outputList.map((elE, ind)=>{
+            parsedProps = {};
+            for(let childProp in childProps) parsedProps[childProp] = format(childProps[childProp].replace("$i", ind), elE);
+            if(typeof elE.type!="undefined" && elE.type==1) {
+                parsedProps.className = typeof parsedProps.className!="undefined" ? "header" + parsedProps.className : "header";
+                return self.prepareHeaderItem(parsedProps, elE);
+            } else {
+                return self.prepareItem(parsedProps, elE);
+            }
+        });
+        return this.prepareBaseContainer(parsedParentProps, elArr);
+    }
 
+    prepareBaseContainer(parentProps, elArr) {
+        let self = this;
+        if(["stickyList", "propsalList"].includes(this.state.outputType)) parentProps.className = this.state.outputType; else parentProps.className = "propsalList";
+        return (<ul {...parentProps}>{elArr}</ul>);
+    }
+
+    prepareHeaderItem(childProps, objProps) {
+        let self = this;
+        return (<li {...childProps}>{self.prepareOutput(this.headerStructure || this.structure, objProps)}</li>);
+    }
+
+    prepareItem(childProps, objProps) {
+        let self = this;
+        return (<li {...childProps}>{self.prepareOutput(this.structure, objProps)}</li>);
+    }
 }
 
 /*module.export = {
