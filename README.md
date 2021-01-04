@@ -1,6 +1,14 @@
 # Jumper package
 ## Description
-Last Version: 0.1.5
+Last Version: 0.1.7
+
+![Jumper.react Logo](https://imgur.com/5oximLW)
+
+## What's new in 0.1.6?
+* Impoved appState performance
+* Added support for services
+* Updated App State Jumper module
+* assignTypedProps(obj: object, propsArr: Array<string>, tgProps: object = {}, options: object = {}) in "jumper/models"
 
 ## What's new in 0.1.5?
 * parseHTMLComponent(htmlStr: string, allowedTags: Array<string> = [], allowed: boolean = true) in "jumper/components"

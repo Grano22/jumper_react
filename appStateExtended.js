@@ -285,21 +285,64 @@ export class ActionsStack {
     lastAction = "";
     stackHistorySize = 20;
     stackRestoredSize = 20;
-    //options = {};
+
+    _events = {
+        "beforeunload":[],
+        "visibilitychange":[],
+        "beforecomponentunmount":[]
+    };
+    _lastID = 0;
+    _customInitialData = {};
+
+    //States
+    isReady = false;
+    
+    get isUpdated() {
+        let ld = this.getComponentLastSavedData();
+        if(ld==null) return false;
+        return parseInt(ld[0])==this._lastID;
+    }
 
     //Measuring
     restoredMemoryTime = -1;
 
     constructor(component, inArr, options={stackSize:20, debug:false, loadResumeable:true}) {
+        let self = this;
         this.component = component;
         if(typeof this.component.state=="undefined") this.component.state = {};
         this.stackSize = options.stackSize;
         this.setOperationsNamespace(inArr);
         if(options.loadResumeable) this.restoredMemoryTime = this.restoreStacksSessions();
         function onBeforePageUnload() {
+            for(let evtTypeName in self._events["beforeunload"]) {
+                self._events["beforeunload"][evtTypeName].call(self);
+            }
             this.saveStacksSessions();
         }
         window.addEventListener("beforeunload", onBeforePageUnload.bind(this));
+        function onPageVisibilityChange() {
+            for(let evtTypeName in self._events["visibilitychange"]) {
+                self._events["visibilitychange"][evtTypeName].call(self);
+            }
+            //if(document.visibilityState === 'visible')
+        }
+        document.addEventListener("visibilitychange", onPageVisibilityChange.bind(this));
+        function onComponentWillUnmount() {}
+        if(typeof component.componentWillUnmount!="undefined") {
+            let originalEvt = component.componentWillUnmount;
+            component.componentWillUnmount = function(props) {
+                for(let evtTypeName in self._events["beforecomponentunmount"]) {
+                    self._events["beforecomponentunmount"][evtTypeName].call(self);
+                }
+                originalEvt(props);
+            }
+        } else {
+            component.componentWillUnmount = function(props) {
+                for(let evtTypeName in self._events["beforecomponentunmount"]) {
+                    self._events["beforecomponentunmount"][evtTypeName].call(self);
+                }
+            }
+        }
         //Toolbar
         if(document.getElementById("jumper-debuger-container")==null) {
         let debugContainer = document.createElement("div");
@@ -309,10 +352,25 @@ export class ActionsStack {
         if(typeof component.componentWillUnmount!="undefined") { let callback = component.componentWillUnmount.bind(component); component.componentWillUnmount = function() { callback(); debugContainer.remove(); } } else component.componentWillUnmount = function() { /*ReactDOM.unmountComponentAtNode();*/ debugContainer.remove(); }
         }
         //END Toolbar
+        window.currentAction = this;
+        this.isReady = true;
     }
     addError(newErr) {
         this.errorsStack.push(newErr);
         console.error(newErr);
+    }
+    //Add Event Listener to given event type
+    addEventListener(evtType, cbFn, sync=false) {
+        let evtNS = Object.keys(this._events);
+        for(let evtName of evtNS) {
+            if(evtType==evtName) {
+                this._events[evtName].push(cbFn);
+            }
+        }
+        return false;
+    }
+    removeEventListener(evtType, cbFn) {
+
     }
     setOperationsNamespace(inArr) {
         if(!Array.isArray(inArr)) { this.addError(new ActionError("Invaild input, array expected", 0, "")); return this; }
@@ -335,20 +393,78 @@ export class ActionsStack {
         if(withRestored) this.operationsRestoredStack = this.operationsRestoredStack.map(filter);
         this.component.setState({actionHandler:this.dump()});
     }
+    checkOperationIsRegistered(targetOperation) {
+        for(let namespaceNm in this.namespaceRange) {
+            if(this.namespaceRange[namespaceNm].prototype.constructor.name==targetOperation.constructor.name) return true;
+            console.log(this.namespaceRange[namespaceNm].prototype.constructor.name, targetOperation.constructor.name);
+        }
+        return false;
+    }
     addOperation(newOperation, inputData = {}) {
         try {
+            let matchRes = null;
             this.lastAction = "addOperation";
-            if(!this.namespaceRange.map(v=>v.prototype.constructor.name).includes(newOperation.constructor.name)) throw "Unexpected Action class, use one of registered: "+this.namespaceRange.map(v=>v.prototype.constructor.name).join(",");
-            newOperation.inputData = inputData;
-            newOperation.lastInputData = inputData;
-            let matchRes = newOperation.name.match(/\$\{(\w\d?)+\}/g);
-            if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.name.replace(matchRes[matchRe], inputData[wd]); } }
-            let outCpt = newOperation.onStore(this.component, inputData, newOperation.outputData) || {};
-            matchRes = newOperation.name.match(/\#\{(\w\d?)+\}/g);
-            if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.name.replace(matchRes[matchRe], outCpt[wd]); } }
+            if(typeof newOperation!="object") throw "Unexpected argument #1 - "+newOperation+", you need to pass a instance of JumperOperation";
+            if(!this.checkOperationIsRegistered(newOperation)) throw "Unexpected Action class, use one of registered: "+this.namespaceRange.map(v=>v.prototype.constructor.name).join(",");
+            newOperation.id = this._lastID;
+            this._lastID++;
+            if(typeof inputData=="object" && inputData!=null) {
+                newOperation.inputData = inputData;
+                newOperation.lastInputData = inputData;
+                if(typeof newOperation.name=="string") { matchRes = newOperation.name.match(/\$\{(\w\d?)+\}/g);
+                if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.name.replace(matchRes[matchRe], inputData[wd]); } } }
+                if(typeof newOperation.description=="string") { matchRes = newOperation.description.match(/\$\{(\w\d?)+\}/g);
+                if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.description.replace(matchRes[matchRe], inputData[wd]); } } }
+            } else newOperation.inputData = {};
+            let outCpt = newOperation.onStore(this.component, newOperation.inputData, this.component.state); // newOperation.outputData
+            if(typeof outCpt=="object" && outCpt!=null) {
+                if(typeof newOperation.name=="string") { matchRes = newOperation.name.match(/\#\{(\w\d?)+\}/g);
+                if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.name.replace(matchRes[matchRe], outCpt[wd]); } } }
+                if(typeof newOperation.description=="string") { matchRes = newOperation.description.match(/\#\{(\w\d?)+\}/g);
+                if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.description.replace(matchRes[matchRe], outCpt[wd]); } } }
+            }
             this.operationsHistoryStack.push(newOperation);
             if(this.operationsHistoryStack.length>=this.stackSize) this.operationsHistoryStack.shift();
-            this.component.setState(Object.assign(outCpt, {actionHandler:this.dump()}));
+            this.component.setState(Object.assign(outCpt, {lastActionDate:new Date(), actionHandler:this.dump()}));
+        } catch(e) {
+            console.error(e);
+        }
+    }
+    addOperations(newOperations) {
+        try {
+            let newOperation = null, finalState = {}, matchRes = null;
+            this.lastAction = 'addOperations('+newOperations.toString()+')';
+            if(Array.isArray(newOperations)) {
+                if(newOperations.length>0) {
+                    for(let operInd in newOperations) {
+                        if(typeof newOperations[operInd]!="object") throw "";
+                        if(typeof newOperations[operInd].operation!="object") throw "Unexpected input array item "+operInd+" - in argument 1 , "+newOperation+", you need to pass a instance of JumperOperation";
+                        newOperation = newOperations[operInd].operation;
+                        if(!this.checkOperationIsRegistered(newOperation)) throw "Unexpected Action class, use one of registered: "+this.namespaceRange.map(v=>v.prototype.constructor.name).join(",");
+                        newOperation.id = this._lastID;
+                        this._lastID++;
+                        if(typeof newOperations[operInd].inputData=="object") {
+                            newOperation.inputData = newOperations[operInd].inputData;
+                            newOperation.lastInputData = newOperations[operInd].inputData;
+                            if(typeof newOperation.name=="string") { matchRes = newOperation.name.match(/\$\{(\w\d?)+\}/g);
+                            if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.name.replace(matchRes[matchRe], newOperations[operInd].inputData[wd]); } } }
+                            if(typeof newOperation.description=="string") { matchRes = newOperation.description.match(/\$\{(\w\d?)+\}/g);
+                            if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.description.replace(matchRes[matchRe], newOperations[operInd].inputData[wd]); } } }
+                        } else newOperation.inputData = {};
+                        let outCpt = newOperation.onStore(this.component, newOperation.inputData, this.component.state); // newOperation.outputData
+                        if(typeof outCpt=="object" && outCpt!=null) {
+                            if(typeof newOperation.name=="string") { matchRes = newOperation.name.match(/\#\{(\w\d?)+\}/g);
+                            if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.name.replace(matchRes[matchRe], outCpt[wd]); } } }
+                            if(typeof newOperation.description=="string") { matchRes = newOperation.description.match(/\#\{(\w\d?)+\}/g);
+                            if(matchRes!=null) { for(let matchRe in matchRes) { let wd = matchRes[matchRe].substring(0, matchRes[matchRe].length - 2).substring(0, 2); newOperation.description.replace(matchRes[matchRe], outCpt[wd]); } } }
+                        } else outCpt = {};
+                        this.operationsHistoryStack.push(newOperation);
+                        if(this.operationsHistoryStack.length>=this.stackSize) this.operationsHistoryStack.shift();
+                        finalState = Object.assign(finalState, outCpt);
+                    }
+                    this.component.setState(Object.assign(finalState, {lastActionDate:new Date(), actionHandler:this.dump()}));
+                }
+            }
         } catch(e) {
             console.error(e);
         }
@@ -384,8 +500,28 @@ export class ActionsStack {
     setTypeRange() {
 
     }
-    defineCustomInitialData() {
-
+    defineCustomInitialData(valCB) {
+        this._customInitialData.push(valCB.bind(this, [this, this.component]));
+    }
+    saveComponentCustomInitialData() {
+        let essentialVal = null;
+        for(let valCB in this._customInitialData) {
+            essentialVal = this._customInitialData[valCB]();
+            if(typeof essentialVal=="object") essentialVal = JSON.stringify(essentialVal);
+            window.sessionStorage.setItem("jumper_cs_"+valCB+"_"+this.accessHash, essentialVal);
+        }
+    }
+    restoreComponentCustomInitialData() {
+        for(let valCB in this._customInitialData) {
+            let essentialVal = window.sessionStorage.getItem("jumper_cs_"+valCB+"_"+this.accessHash);
+            if(essentialVal!=null) this.component[valCB] = essentialVal;
+        }
+    }
+    restoreComponentProp(propName) {
+        return window.sessionStorage.getItem("jumper_po_"+propName+"_"+this.accessHash);
+    }
+    saveComponentProp(propName) {
+        window.sessionStorage.setItem("jumper_po_"+propName+"_"+this.accessHash, this.component[propName]);
     }
     saveComponentProps() {
 
@@ -393,23 +529,30 @@ export class ActionsStack {
     saveComponentState() {
 
     }
+    get accessHash() {
+        if(typeof this._retrivedHash=="undefined") {
+            let ach = this.component.constructor.name+"#"+cyrb53(this.component.constructor.toString());
+            this._retrivedHash = ach;
+            return ach;
+        } else return this._retrivedHash;
+    }
+    getComponentLastSavedData() { let dt = window.sessionStorage.getItem("jumper_c_"+this.accessHash); return dt!=null ? dt.split(";") : null; }
     saveStacksSessions() {
-        let accessHash = this.component.constructor.name+"#"+cyrb53(this.component.constructor.toString());
-        window.sessionStorage.setItem("jumper_c_"+accessHash, this.toString());
+        window.sessionStorage.setItem("jumper_c_"+this.accessHash, this.toString());
         let hl = "", rl = "";
         for(let ha in this.operationsHistoryStack) { if(this.operationsHistoryStack[ha].type==3) { hl += this.operationsHistoryStack[ha].toString().replace(/\&/g, "\\&"); if(ha!=this.operationsHistoryStack.length - 1) hl += "&"; } }
-        window.sessionStorage.setItem("jumper_sh_"+accessHash, hl);
+        window.sessionStorage.setItem("jumper_sh_"+this.accessHash, hl);
         for(let ra in this.operationsRestoredStack) { if(this.operationsHistoryStack[ra].type==3) { rl += this.operationsRestoredStack[ra].toString().replace(/\&/g, "\\&"); if(ra!=this.operationsRestoredStack.length - 1) rl += "&"; } }
-        window.sessionStorage.setItem("jumper_sr_"+accessHash, rl);
+        window.sessionStorage.setItem("jumper_sr_"+this.accessHash, rl);
     }
     restoreStacksSessions() {
-        var startActionsRestoringTime = microtime(true);
-        let resActions = null, accessHash = this.component.constructor.name+"#"+cyrb53(this.component.constructor.toString());
-        if(resActions = window.sessionStorage.getItem("jumper_c_"+accessHash)!=null) {
+        let resActions = null;
+        if(resActions = window.sessionStorage.getItem("jumper_c_"+this.accessHash)!=null) {
             try {
             this.lastAction = "operationsLoad";
             resActions = splitByParsing(resActions, ";", "/");
-            let jumperS1 = window.sessionStorage.getItem("jumper_sh_"+accessHash);
+            this._lastID = parseInt(resActions[0]);
+            let jumperS1 = window.sessionStorage.getItem("jumper_sh_"+this.accessHash);
             if(jumperS1!=null) {
                 jumperS1 = splitByParsing(jumperS1, "&", "/");
                 console.log(jumperS1);
@@ -434,7 +577,7 @@ export class ActionsStack {
                 }
                 this.component.setState(Object.assign(outCpt, {actionHandler:this.dump()}));
             }
-            let jumperS2 = window.sessionStorage.getItem("jumper_sr_"+accessHash);
+            let jumperS2 = window.sessionStorage.getItem("jumper_sr_"+this.accessHash);
             if(jumperS2!=null) {
                 jumperS2 = splitByParsing(jumperS2, "&", "/");
                 let outCpt = {};
@@ -455,13 +598,11 @@ export class ActionsStack {
                 this.component.setState(Object.assign(outCpt, {actionHandler:this.dump()}));
             }
             } catch(e) {
-                this.addError(e, 0, "");
+                console.error(e);
             }
-            
         }
-        return microtime(true) - startActionsRestoringTime;
     }
-    toString() { return `${cyrb53(this.component.constructor.toString())}h;${cyrb53(this.component.constructor.toString())}r;${this.lastAction}`; }
+    toString() { return `${this._lastID};${new Date().toISOString().slice(0, 19).replace('T', ' ')};${this.lastAction}`; /*${cyrb53(this.component.constructor.toString())};*/ }
     dump() { return `${this.lastAction}`; }
     /* Events */
     onRestore() {/* Native Code */}

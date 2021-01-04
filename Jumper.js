@@ -227,6 +227,9 @@ class JumperBrowser {
         if(typeof window.navigator.language!="undefined") return window.navigator.language;
         else if(typeof window.navigator.userLanguage!="undefined") return window.navigator.userLanguage;
     }
+    get hostURL() {
+        return window.location.protocol+(window.location.protocol.indexOf("file")>-1 ? "///" : "//")+window.location.host+"/";
+    }
     clipboard = (function() {
         var clipboardHistory = [];
         return new class {
@@ -344,6 +347,25 @@ class JumperBrowser {
 }
 
 class Jumper {
+    /*import = function(src, modules=[]) {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+            if (this.status === 200) {
+                
+            } else {
+
+            }
+        }
+        xhr.open( "HEAD", src, true );
+        xhr.send();
+    }
+    export = function(modules=[]) {
+
+    }
+    importAs = function(src, modules=[], defualtValue=null) {
+        //eval("(function() { return false; }())");
+        return defualtValue;
+    }*/
     Browser = new JumperBrowser();
     Console = Object.create(Object.prototype, {
         init:{
