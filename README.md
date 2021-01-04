@@ -2,9 +2,9 @@
 ## Description
 Last Version: 0.1.7
 
-![Jumper.react Logo](https://imgur.com/5oximLW)
+![Jumper.react Logo](https://imgur.com/5oximLW.png)
 
-## What's new in 0.1.6?
+## What's new in 0.1.7?
 * Impoved appState performance
 * Added support for services
 * Updated App State Jumper module
