@@ -1,7 +1,7 @@
 /* Jumper | Components Module | Grano22 Dev */
 import React, {Component} from 'react';
 import { RawHTML } from 'react-dom';
-import { format } from './dataProcessing';
+import { format } from './dataProcessing.js';
 
 //parse HTML string to Native Elements
 export function parseHTMLComponent(htmlStr, allowedTags=[], allowed=true) {

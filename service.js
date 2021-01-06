@@ -1,5 +1,5 @@
-import Jumper from './jumper_react';
-import { assignTypedProps } from './models';
+import Jumper from './jumper_react.js';
+import { assignTypedProps } from './models.js';
 //Jumper.import("axios");
 //import axios from 'axios';
 var axios = undefined;

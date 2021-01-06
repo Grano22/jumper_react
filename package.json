@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "jumper_react",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Library for managment of application states and more",
   "main": "./jumper_react.js",
   "scripts": {

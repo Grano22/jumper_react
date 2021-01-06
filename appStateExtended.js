@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import { JSONSafteyParse } from './dataProcessing';
-import { basicHashString, cyrb53 } from './cryptography';
-import { Console, JumperError } from './jumper_react';
-import { microtime, sizeOf } from './performance';
+import { JSONSafteyParse } from './dataProcessing.js';
+import { basicHashString, cyrb53 } from './cryptography.js';
+import { Console, JumperError } from './jumper_react.js';
+import { microtime, sizeOf } from './performance.js';
 /*  Jumper Diagnostic Extension 
     Version: 0.1
 
