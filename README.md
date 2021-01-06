@@ -1,8 +1,22 @@
 # Jumper package
 ## Description
-Last Version: 0.1.7
+Last Version: 0.1.8
+Modules:
+1. jumper_react/appState (Module for application state managment)
+2. jumper_react/appStateExtended (Module for application state managment - extended with developers tools only recommend during development)
+3. jumper_react/components (Components tools)
+4. jumper_react/cryptography (Crypto algorythms module)
+5. jumper_react/dataProcessing (Data tools module)
+6. jumper_react/languageDescriptor (Language translation module)
+7. jumper_react/models (Models module)
+8. jumper_react/service (Services and network tools module)
+9. jumper_react/performance (Performance tools module)
 
 ![Jumper.react Logo](https://imgur.com/5oximLW.png)
+
+## What's new in 0.1.8?
+* fix for package name from jumper to jumper_react
+* new performance tools in jumper_react/performance
 
 ## What's new in 0.1.7?
 * Impoved appState performance
