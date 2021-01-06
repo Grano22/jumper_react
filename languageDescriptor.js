@@ -1,5 +1,5 @@
 /* Language Descriptor | Jumper Module | Grano22 Dev | V1 */
-import Jumper from 'jumper_react';
+import Jumper from './jumper_react';
 
 export class LanguageDescriptorCollection {
     collection = [];

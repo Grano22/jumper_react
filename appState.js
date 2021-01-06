@@ -1,7 +1,7 @@
 /* Jumper Library by Grano22 | v 1.0 | React */
-import { JSONSafteyParse } from 'jumper_react/dataProcessing';
-import { basicHashString, cyrb53 } from 'jumper_react/cryptography';
-import { Console, JumperError } from 'jumper_react';
+import { JSONSafteyParse } from './dataProcessing';
+import { basicHashString, cyrb53 } from './cryptography';
+import { Console, JumperError } from './jumper_react';
 
 export class JumperMemoryLeak extends JumperError {
 

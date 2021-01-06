@@ -1,6 +1,6 @@
 # Jumper package
 ## Description
-Last Version: 0.1.8
+Last Version: 0.1.9
 Modules:
 1. jumper_react/appState (Module for application state managment)
 2. jumper_react/appStateExtended (Module for application state managment - extended with developers tools only recommend during development)
