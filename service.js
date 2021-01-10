@@ -1,9 +1,63 @@
 import Jumper from './jumper_react.js';
 import { assignTypedProps } from './models.js';
+import {  JSONSafteyParse } from './dataProcessing.js';
 //Jumper.import("axios");
 //import axios from 'axios';
 var axios = undefined;
 /* Service Lib | 1.0.0 | Grano22 */
+export class JumperServiceDataModel {
+    constructor(assocInput=null) {
+        if(assocInput!=null) this.assign(assocInput);
+    }
+
+    assign(assocInput) {
+        if(typeof assocInput=="string") JSONSafteyParse(assocInput, {});
+        for(let assocKey in assocInput) {
+            if(typeof this[assocKey]!="undefined") this[assocKey] = this.assignPropertyFiltered(assocInput[assocKey]);   
+        }
+    }
+
+    filterProperties() {/* Native Code */}
+    filterToSQLQuery() {/* Native Code */}
+
+    assignPropertyFiltered(objProp) {
+        switch(typeof objProp) {
+            case "object":
+            break;
+            case "string":
+                if(RegExp(/^([0-9]{2,4})-([0-1][0-9])-([0-3][0-9])(?:( [0-2][0-9]):([0-5][0-9]):([0-5][0-9]))?(.[0-9]{1,6})?$/).test(objProp)) return this.dateFromString(objProp);
+            break;
+        }
+        let customFilter = this.filterProperties();
+        if(customFilter!=null && customFilter!==undefined) return customFilter; 
+        return objProp;
+    }
+
+    prepareToSQLQuery() {
+        var obj = {};
+        for(let objProp in this) {
+            switch(typeof objProp) {
+                case "object":
+                    if(objProp instanceof Date) obj[objProp] = this.dateToString(this[objProp]);
+                break;
+                default: let customFilter = this.filterToSQLQuery(); if(customFilter!==undefined && customFilter!=null) obj[objProp] = customFilter; else obj[objProp] = this[objProp];
+            }
+        }
+    }
+
+    dateFromString(dateStr) {
+        let dateParts = dateStr.split(" ");
+        dateParts = dateParts[0].split("-");
+        if(dateParts[1].length>0) {
+            let timeParts = dateParts[1].split(":");
+            return new Date(dateParts[0], dateParts[1] - 1, dateParts[2].substr(0,2), timeParts[0], timeParts[1], timeParts[2]);
+        } else return new Date(dateParts[0], dateParts[1] - 1, dateParts[2].substr(0,2));
+    }
+
+    dateToString(date) {
+        return date.toISOString().slice(0, 19).replace('T', ' ');
+    }
+}
 
 export class JumperHTTPRequest {
     timeout = 4000;
