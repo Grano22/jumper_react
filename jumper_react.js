@@ -346,26 +346,111 @@ class JumperBrowser {
     
 }
 
-class Jumper {
-    /*import = function(src, modules=[]) {
-        var xhr = new XMLHttpRequest();
-        xhr.onload = function() {
-            if (this.status === 200) {
-                
-            } else {
+class JumperMemoryManager {
 
-            }
-        }
-        xhr.open( "HEAD", src, true );
-        xhr.send();
+    get cookieEnabled() {
+        if(navigator.cookieEnabled!==undefined) return navigator.cookieEnabled;
+        document.cookie = "checkCookieEnabled=1";
+        var ret = document.cookie.indexOf("checkCookieEnabled=") != -1;
+        document.cookie = "checkCookieEnabled=1; expires=Thu, 01-Jan-1970 00:00:01 GMT";
+        return ret;
     }
-    export = function(modules=[]) {
+
+    dateToCookieFormat(d) {return d.toUTCString();}
+    dateFromCookieFormat(dateInput) {return new Date(dateInput+" Z");}
+
+    getAllCookies() {
+        var clist = {}, rsplt = document.cookie.split(";");
+        for(let cname in rsplt) clist[cname] = decodeURIComponent(rsplt[cname]); 
+        return clist;
+    }
+
+    getCookie(name) {
+        let cookiesEntries = document.cookie, cookiesEntryName = document.cookie.indexOf(name), afterEqualing = "=";
+        if(cookiesEntryName<0) return null;
+        for(let i = cookiesEntryName + name.lenght;i<cookiesEntries.length;i++) { if(afterEqualing!="=") afterEqualing += cookiesEntries[i]; else if(cookiesEntries[i]=="=") afterEqualing = ""; if(i+1==cookiesEntries.length-1 || cookiesEntries[i + 1]==";") return decodeURIComponent(afterEqualing); }
+        return null;
+    }
+
+    setCookie(name, value, otherOptions={}) {
+        otherOptions = Object.assign({
+            expireDate:"Tue, 19 Jan 2038 03:14:07 GMT",
+            path:"",
+            domain:"",
+            secure:undefined, //bool
+            maxAge:-1, //miliseconds
+            samesite:"" //strict, lax, none 
+        }, otherOptions);
+        otherOptions.samesite = otherOptions.samesite!="" ? "; samesite = " + otherOptions.samesite : "";
+        otherOptions.secure = typeof otherOptions.secure=="boolean" ? "; secure" : ""; 
+        otherOptions.maxAge = !isNaN(otherOptions.maxAge) && parseInt(otherOptions.maxAge)>-1 ? "; maxAge = " + otherOptions.maxAge : "";
+        otherOptions.domain = otherOptions.domain!="" ? "; domain = " + otherOptions.domain : "";
+        otherOptions.expireDate = (otherOptions.expireDate!="" ? "; expires = " + otherOptions.expireDate : "");
+        otherOptions.path = otherOptions.path!="" ? "; path = " + otherOptions.path : "";
+        document.cookie = encodeURIComponent(name)+" = "+encodeURIComponent(value)+otherOptions.expireDate+otherOptions.path+otherOptions.maxAge+otherOptions.samesite+otherOptions.domain+otherOptions.secure;
+    }
+
+    removeCookie(name) {
+        document.cookie = name+'=; expires=Thu, 01-Jan-1970 00:00:01 GMT';
+    }
+
+    /*removeCookieFromPaths() {
 
     }
-    importAs = function(src, modules=[], defualtValue=null) {
-        //eval("(function() { return false; }())");
-        return defualtValue;
+
+    removeCookiesFromPaths() {
+
     }*/
+
+    removeAllCookies() {
+        var cookies = document.cookie.split(";");
+        for (var i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i], eqPos = cookie.indexOf("="), name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+            document.cookie = name+"=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        }
+    }
+
+    getItem(itemName, memType="local") {
+        switch(memType) {
+            case "local":
+                return window.localStorage.getItem(itemName);
+            case "session":
+                return window.sessionStorage.getItem(itemName);
+            case "cookies":
+                return this.getCookie(itemName);
+        }
+    }
+
+    setItem(itemName, value, memType="local") {
+        switch(memType) {
+            case "local":
+                window.localStorage.setItem(itemName, value);
+            break;
+            case "session":
+                window.sessionStorage.setItem(itemName, value);
+            break;
+            case "cookies":
+                return this.setCookie(itemName, value);
+        }
+        return true;
+    }
+
+    removeItem(itemName, memType="local") {
+
+    }
+
+    removeAll(memType="local", filter=null) {
+
+    }
+}
+
+class JumperFrontEndApi {
+    
+}
+
+class Jumper {
+    API = new JumperFrontEndApi(this);
+    Memory = new JumperMemoryManager();
     Browser = new JumperBrowser();
     Console = Object.create(Object.prototype, {
         init:{
@@ -500,6 +585,33 @@ class Jumper {
     
     isCompositeTypeElement(element) {
         return this.isElement(element) && typeof element.type === 'function';
+    }
+
+    __lastScriptConfig = null;
+
+    get lastScriptConfig() {
+        return this.__lastScriptConfig;
+    }
+
+    get currentScript() {
+        if(typeof document.currentScript!="undefined") return document.currentScript; else {
+            var coll = document.getElementsByTagName("script");
+            return coll[coll.length - 1];
+        }
+    }
+
+    getScriptConfiguration(dataType="json", clearConfig=true) {
+        let currScript = this.currentScript, getterConf = currScript.innerHTML, outputObj = null;
+        switch(dataType) {
+            case "yml":
+
+            break;
+            case "json":
+            default:
+                outputObj = JSON.parse(getterConf);
+        }
+        if(clearConfig) currScript.innerHTML = "";
+        return outputObj;
     }
 }
 

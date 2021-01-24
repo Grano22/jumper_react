@@ -1,3 +1,11 @@
+
+
+/**
+ * Parse a JSON string saftey with exception handling
+ * @param {*} inObj 
+ * @param {Function} defaultVal 
+ * @param {Function} onError 
+ */
 export function JSONSafteyParse(inObj, defaultVal=null, onError=null) {
     try {
         let nd = JSON.parse(inObj);
@@ -13,33 +21,27 @@ export function JSONSafteyParse(inObj, defaultVal=null, onError=null) {
     }
 }
 
+/**
+ * Replace substring in index
+ * @param {string} str 
+ * @param {number} index 
+ * @param {string} replacement 
+ * @returns {string}
+ */
 export function replaceAt(str, index, replacement) {
     return str.substr(0, index) + replacement + str.substr(index + replacement.length);
 }
 
+/**
+ * Replace substring between indexes in string
+ * @param {string} str 
+ * @param {number} start 
+ * @param {number} end 
+ * @param {string} replacement 
+ * @returns {string}
+ */
 export function replaceBetween(str, start, end, replacement) {
     return str.substring(0, start) + replacement + str.substring(end);
-};
-  
-
-export function changeArrayIndex(arr, oldIndex, newIndex) {
-    try {
-        if(typeof newIndex=="string") {
-            if(newIndex.indexOf("+")==0 || newIndex.indexOf("-")==0) { newIndex = parseInt(oldIndex) + parseInt(newIndex);  }
-            //else if(newIndex.indexOf("-")==0) { newIndex = oldIndex - parseInt(newIndex); }
-            else if(isFinite(parseInt(newIndex))) newIndex = parseInt(newIndex);
-            else throw "Cannot change array index due to non decimal newIndex argument type";
-        }
-        if(newIndex>arr.length-1) newIndex = arr.length - 1;
-        if(newIndex<0) newIndex = 0;
-        /*if (newIndex >= arr.length) {
-            var k = newIndex - arr.length + 1;
-            while (k--) arr.push(undefined);
-        }*/
-        arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
-    } catch(ArrayOperationError) {
-        console.error(ArrayOperationError);
-    }
 }
 
 export function splitAllWithSeparators(str, sepArr=[]) {
@@ -63,15 +65,13 @@ export function backOccurence(str, target) {
     return -1;
 }
 
-export function iterateObjectKeys(tgObj, inputKeys) {
-    let lastVal = null, expKeys = inputKeys.slice();
-    while(expKeys.length>0) {
-        if(typeof tgObj[expKeys[0]]!="undefined") lastVal = tgObj[expKeys[0]];
-        expKeys.shift();
-    }
-    return lastVal;
-}
-
+/**
+ * format string
+ * @param {string} targetStr
+ * @param {*} initialObj
+ * @param {string} defaultVal
+ * @returns {string}
+ */
 export function format(targetStr, initialObj=null, defaultVal="") {
     try {
         let sequences = [], sequence = "", inVarDeclaration = false, outputStr = "", fParams = [], depth = 0;
@@ -133,6 +133,9 @@ export function format(targetStr, initialObj=null, defaultVal="") {
                         case "d":
                             if(!(Number(currItem) === currItem && currItem % 1 === 0)) currItem = parseInt(currItem);
                             outputStr = outputStr.replace("%"+sequences[catched][0]+seqParams.map(v=>"["+v+"]").join(""), currItem);
+                        break;
+                        case "bin":
+
                         break;
                         case "b":
                             if(typeof currItem!="boolean") currItem = !!currItem;

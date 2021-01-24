@@ -1,17 +1,21 @@
 {
   "type": "module",
   "name": "jumper_react",
-  "version": "0.1.11",
+  "version": "0.1.13",
   "description": "Library for managment of application states and more",
   "main": "./jumper_react.js",
   "scripts": {
-    "test": ""
+    "test": "node node_modules/jumper_react/bin/jumper_react.js & npm list --depth 1 --global jumper_react"
   },
   "keywords": [
     "react",
     "npm"
   ],
+  "_moduleAliases": {
+    "@jumper_react_crypto": "./cryptography"
+  },
   "dependencies": {
+    "module-alias": "^2.2.2",
     "react": "^16.5.0",
     "react-dom": "^17.0.1"
   },
