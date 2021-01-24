@@ -23,6 +23,9 @@
     "type": "git",
     "url": "https://github.com/Grano22/jumper.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "author": "grano22",
   "license": "MIT"
 }
