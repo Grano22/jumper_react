@@ -1,6 +1,6 @@
-# Jumper package &middot; [![Github license](https://img.shields.io/badge/license-MIT-blue.svg)](void) &middot; [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/jumper_react)
+# Jumper package &middot; [![Github license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) &middot; [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/jumper_react)
 ## Description
-Last Version: 0.1.12
+Last Version: 0.1.12  
 Modules:
 1. jumper_react (Base module)
     * Console
