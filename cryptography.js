@@ -1,3 +1,7 @@
+/************ jumper_react | cryptography module **************/
+/********************** Version: 0.2 **************************/
+/************************ Grano22 *****************************/
+
 function crypto_rhex(n) {
     const hex_chr = '0123456789abcdef'.split('');
     var s='', j=0;

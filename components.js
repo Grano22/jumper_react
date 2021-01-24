@@ -1,9 +1,17 @@
-/* Jumper | Components Module | Grano22 Dev */
+/************* jumper_react | components module ***************/
+/********************** Version: 0.1 **************************/
+/************************ Grano22 *****************************/
 import React, {Component} from 'react';
 import { RawHTML } from 'react-dom';
 import { format } from './dataProcessing.js';
 
-//parse HTML string to Native Elements
+/**
+ * Parse HTML string to Native Elements
+ * @param {string} htmlStr HTML string to parse
+ * @param {Array<string>} allowedTags Allowed/Dissallowed tag list
+ * @param {boolean} allowed Allowed/Dissalowed switch
+ * @returns {HTMLElement}
+ */
 export function parseHTMLComponent(htmlStr, allowedTags=[], allowed=true) {
     try {
         let parsedElements = [], charMetrices = "", inHTMLChar = 0, lastTag = { attrs:{} }, inAttr = false;
@@ -98,7 +106,13 @@ export function parseHTMLComponent(htmlStr, allowedTags=[], allowed=true) {
     }
 }
 
-//Parse HTML string to React Component
+/**
+ * Parse HTML string to React Component
+ * @param {string} htmlStr HTML string to parse
+ * @param {Array<string>} allowedTags Allowed/Dissallowed tag list
+ * @param {boolean} allowed Allowed/Dissalowed switch
+ * @returns {React.Component}
+ */
 export function parseHTMLReactComponent(htmlStr, allowedTags=[], allowed=true) {
     try {
         let parsedElements = [], charMetrices = "", inHTMLChar = 0, lastTag = { attrs:{} }, inAttr = false;
